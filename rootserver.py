@@ -17,8 +17,6 @@ class ClientThread(Thread):
         requesttwo = requestone.replace(">", "")
         cleanedrequest = requesttwo.split(",")
         IR = cleanedrequest[2]
-
-        print "IR: ", IR
         # returns 1 for Iterative
         # returns 0 for Recursive
         if IR.strip() == 'i' or IR.strip() == 'I':
@@ -33,16 +31,25 @@ class ClientThread(Thread):
 
 
     #this function will take in the request from the local server and return
-    #the port of the com, dat, or org server needed.  This can be hardcoded
-    #because the assignment sheet specifically gave port numbers for each
-    #one of those servers.
+    #the full return message needed to the "run" method, so that the run method
+    # doesn't have to do any calculation.
     def iterativeRequest(self, data):
         print "Recieved an iterative request for :", data
         #this code block just splits the request for me
         requestone = data.replace("<", "")
         requesttwo = requestone.replace(">", "")
         cleanedrequest = requesttwo.split(",")
-    
+        print "Domain name to search for: ", cleanedrequest[1]
+        domain = cleanedrequest[1].split(".")
+        finaldomain = domain[2]
+        print "domain server to query: ", finaldomain
+        if finaldomain.strip() == 'org'
+            port = 5354
+        elif finaldomain.strip == 'gov'
+            port = 5355
+        elif finaldomain.strip == 'com'
+            port = 5356
+
     #this function will take in a request and return what it gets back from the
     #com, org, or dat server.
     def recursiveRequest(self, data):
