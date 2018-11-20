@@ -47,16 +47,39 @@ class ClientThread(Thread):
         print "IR: ", IR
         # returns 1 for Iterative
         # returns 0 for Recursive
-        if IR == 'i' or IR == 'I':
+        if IR.strip() == 'i' or IR.strip() == 'I':
+            print"We think it is iterative, here is the actual data: ", IR
             return 1
         else:
+            print "We tink is is recursive, here is the actual data: ", IR
             return 0
 
     def recursiveRequest(self, data):
         print "Here is our recursive request to send to the root: ", data
+        host = socket.gethostname()
+        port = 5353
+        BUFFER_SIZE = 2000
+        MESSAGE = data
+
+        RecursiveRequestSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        RecursiveRequestSocket.connect((host, port))
+        RecursiveRequestSocket.send(MESSAGE)
+        data = RecursiveRequestSocket.recv(BUFFER_SIZE)
+        print "Local Server Recieved received data:", data
+
 
     def iterativeRequest(self, data):
         print "Here is our Iterative request to send to the root: ", data
+        host = socket.gethostname()
+        port = 5353
+        BUFFER_SIZE = 2000
+        MESSAGE = data
+
+        RecursiveRequestSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        RecursiveRequestSocket.connect((host, port))
+        RecursiveRequestSocket.send(MESSAGE)
+        data = RecursiveRequestSocket.recv(BUFFER_SIZE)
+        print "Local Server Recieved received data:", data
 
     def run(self):
         while True :
