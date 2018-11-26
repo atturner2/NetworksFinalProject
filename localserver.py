@@ -67,8 +67,10 @@ class ClientThread(Thread):
         data = RecursiveRequestSocket.recv(BUFFER_SIZE)
         print "Local Server Recieved received data:", data
 
-
-    def iterativeRequest(self, data):
+    # this function queries the root server for the port number of the
+    #appropriate domain server.  It then calls the part two function
+    # which will then in turn query the domain server directly. 
+    def iterativeRequestPartOne(self, data):
         print "Here is our Iterative request to send to the root: ", data
         host = socket.gethostname()
         port = 5353
@@ -80,6 +82,7 @@ class ClientThread(Thread):
         RecursiveRequestSocket.send(MESSAGE)
         data = RecursiveRequestSocket.recv(BUFFER_SIZE)
         print "Local Server Recieved received data:", data
+
 
     def run(self):
         while True :
@@ -99,7 +102,7 @@ class ClientThread(Thread):
                 IR = self.checkIterativeOrRecursive(data)
             if IR == 1:
                 #request is Iterative, call iterative function
-                self.iterativeRequest(data)
+                self.iterativeRequestPartOne(data)
             if IR == 0:
                 #request is Recursive, call recursive function
                 self.recursiveRequest(data)

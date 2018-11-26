@@ -27,13 +27,20 @@ class ClientThread(Thread):
 
     # this function will take in com, dat, or org and return
     #the appropriate port number, for that given Iterative request.
-    #def getPortNumberForIterativeRequest(self,data):
-
-
+    def getPortNumber(self, data):
+        if data.strip() == "org":
+            return 5354
+        if data.strip() == "gov":
+            return 5355
+        if data.strip() == "com":
+            return 5356
+        else:
+            return 1
     #this function will take in the request from the local server and return
     #the full return message needed to the "run" method, so that the run method
     # doesn't have to do any calculation.
     def iterativeRequest(self, data):
+        port = 1
         print "Recieved an iterative request for :", data
         #this code block just splits the request for me
         requestone = data.replace("<", "")
@@ -43,12 +50,11 @@ class ClientThread(Thread):
         domain = cleanedrequest[1].split(".")
         finaldomain = domain[2]
         print "domain server to query: ", finaldomain
-        if finaldomain.strip() == 'org'
-            port = 5354
-        elif finaldomain.strip == 'gov'
-            port = 5355
-        elif finaldomain.strip == 'com'
-            port = 5356
+        port = self.getPortNumber(finaldomain)
+        print "final domain: ", finaldomain
+        print "final port number: ", port
+        message = "<0x01, " + cleanedrequest[0] + ", "+ str(port) + ">"
+        return message
 
     #this function will take in a request and return what it gets back from the
     #com, org, or dat server.
@@ -57,7 +63,7 @@ class ClientThread(Thread):
     #this is the main running function of the server, will call its helpers
     # to send back the proper response to the local server and the client.
     def run(self):
-        while True :
+        #while True :
             data = conn.recv(2048)
             print "Server received data:", data
             # at this point we know the request is valid, so all we need to check
@@ -66,16 +72,16 @@ class ClientThread(Thread):
             print "IR returned: ", IR
             if IR == 1:
                 #call the iterative function(easier)
-                self.iterativeRequest(data)
+                message = self.iterativeRequest(data)
             if IR == 0:
                 #call the Recursive function
                 self.recursiveRequest(data)
 
 
-            MESSAGE = raw_input("Multithreaded Python server : Enter Response from Server/Enter exit:")
-            if MESSAGE == 'exit':
-                break
-            conn.send(MESSAGE)  # echo
+            #MESSAGE = raw_input("Multithreaded Python server : Enter Response from Server/Enter exit:")
+            #if MESSAGE == 'exit':
+                #break
+            conn.send(message)  # echo
 
 # Multithreaded Python server : TCP Server Socket Program Stub
 TCP_IP = '0.0.0.0'
