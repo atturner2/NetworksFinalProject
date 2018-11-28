@@ -1,4 +1,6 @@
 import socket
+import os
+import signal
 from threading import Thread
 from SocketServer import ThreadingMixIn
 
@@ -99,7 +101,9 @@ class ClientThread(Thread):
         print "Here is data back from com, or or goc server to the root server: ", data
         return data
 
-
+    def die(self):
+        print"Dying!"
+        os.kill(os.getpid(), signal.SIGKILL)
 
     #this is the main running function of the server, will call its helpers
     # to send back the proper response to the local server and the client.
@@ -107,6 +111,8 @@ class ClientThread(Thread):
         #while True :
             data = conn.recv(2048)
             print "Server received data:", data
+            if data == "q":
+                self.die()
             # at this point we know the request is valid, so all we need to check
             # is whether or not it is recursive or iterative
             IR = self.checkIterativeOrRecursive(data)
@@ -139,7 +145,7 @@ threads = []
 
 while True:
     tcpServer.listen(4)
-    print "Multithreaded Python server : Waiting for connections from TCP clients..."
+    print "Multithreaded Python root server : Waiting for connections from TCP clients..."
     (conn, (ip,port)) = tcpServer.accept()
     newthread = ClientThread(ip,port)
     newthread.start()

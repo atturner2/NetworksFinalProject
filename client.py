@@ -4,8 +4,7 @@ import socket
 host = socket.gethostname()
 port = 5352
 BUFFER_SIZE = 2000
-MESSAGE = raw_input("tcpClientA: Enter input filename/ Enter q to quit:")
-
+MESSAGE = raw_input("tcpClientA: Enter input filename:")
 tcpClientA = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpClientA.connect((host, port))
 
@@ -36,4 +35,7 @@ while MESSAGE != 'q':
 
     MESSAGE = raw_input("tcpClientA: Enter message to continue/ Enter q to quit:")
 
+if MESSAGE == "q":
+    print "quit"
+    tcpClientA.send("q")
 tcpClientA.close()

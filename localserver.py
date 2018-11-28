@@ -1,4 +1,7 @@
+import sys
 import socket
+import os
+import signal
 from threading import Thread
 from SocketServer import ThreadingMixIn
 #this is the default local DNS server.  It now receives the request from the client
@@ -63,6 +66,7 @@ class ClientThread(Thread):
         else:
             isValid = 0
         return isValid
+
     #this function takes in the original client message and checks
     #to make sure the client id field is of valid format.
     def validateClientID(self, data):
@@ -108,13 +112,13 @@ class ClientThread(Thread):
             return 1
         else:
             return 0
+
     def recursiveRequest(self, data):
         print "Here is our recursive request to send to the root: ", data
         host = socket.gethostname()
         port = 5353
         BUFFER_SIZE = 2000
         MESSAGE = data
-
         RecursiveRequestSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         RecursiveRequestSocket.connect((host, port))
         RecursiveRequestSocket.send(MESSAGE)
@@ -123,6 +127,7 @@ class ClientThread(Thread):
         self.rootMessageLog(data)
         self.rootDefaultLog(data)
         return data
+
     #this function parses for just the domain name to be queried from it's appropriate
     #domain server.  It takes in the whole query and returns just the domain.
     def saveDomainForIterativeRequest(self, data):
@@ -193,12 +198,13 @@ class ClientThread(Thread):
         message = self.iterativeRequestPartTwo(response, domain)
         return message
 
+    #handles logging for first part of iterative request
     def iterativeDefaultLogOne(self, domain, IR):
         defaultlog = open("default_local.log", "a")
         message = "default_local" + domain + ", " + IR + "\n"
         defaultlog.write(message)
 
-
+    #handles logging for second part of iterative request
     def iterativeDefaultLogTwo(self, message):
         defaultlog = open("default_local.log", "a")
         messageone = message.replace("<", "")
@@ -207,12 +213,14 @@ class ClientThread(Thread):
         finalmessage = "\n" + splitmessage[0] + ", " + "default_local" + ", " + splitmessage[2]
         defaultlog.write(finalmessage)
 
+    #helper for the mapping file log
     def writeToMappingFile(self, url, ip):
         print"Here is the request to put in the map file:", url, ", ", ip
         request = url + ", " + ip + " \n"
         mapfile = open("mapping.log", "a")
         mapfile.write(request)
 
+    #writes to the PC1 log file
     def writeToPC1File(self, request, message):
         print"Here is the request to put in the map file:", request, ", ", message
         finalrequest = request
@@ -222,6 +230,7 @@ class ClientThread(Thread):
         mapfile.write(finalmessage)
         mapfile.write("\n")
 
+    #writes to the PC2 log file
     def writeToPC2File(self, request, message):
         print"Here is the request to put in the map file:", request, ", ", message
         finalrequest = request
@@ -231,6 +240,7 @@ class ClientThread(Thread):
         mapfile.write(finalmessage)
         mapfile.write("\n")
 
+    #first line of logging for each request
     def writeFirstRequestToDefaultLog(self, request):
         defaultlog = open("default_local.log", "a")
         defaultlog.write(request)
@@ -238,6 +248,7 @@ class ClientThread(Thread):
         requesttwo = "default_local, " + splitrequest[1] + ", " + splitrequest[2]
         defaultlog.write(requesttwo)
 
+    #handles writing to the mapping file
     def mappingAndIDlog(self, request, message):
         messageone = message.replace("<", "")
         messagetwo = messageone.replace(">", "")
@@ -256,12 +267,16 @@ class ClientThread(Thread):
         if cleanedrequest[0] == "PC2":
             self.writeToPC2File(requesttwo, messagetwo)
         #self.writeFirstRequestToDefaultLog(requesttwo)
+
+    #handles logging for part two of iterative requestss, when the local server
+    #must query the com, org or dat server dierectly.
     def iterativePartTwoLog(self, message):
         messageone = message.replace("<", "")
         messagetwo = messageone.replace(">", "")
         defaultlog = open("default_local.log", "a")
         defaultlog.write(messagetwo)
 
+    #writes the root messages to the deafult log for recursive requests
     def rootMessageLog(self, message):
         messageone = message.replace("<", "")
         messagetwo = messageone.replace(">", "")
@@ -270,6 +285,7 @@ class ClientThread(Thread):
         defaultlog = open("default_local.log", "a")
         defaultlog.write(loggedmessage)
 
+    #writes the cached lines to the default log
     def rootDefaultLog(self, message):
         messageone = message.replace("<", "")
         messagetwo = messageone.replace(">", "")
@@ -278,10 +294,38 @@ class ClientThread(Thread):
         defaultlog = open("default_local.log", "a")
         defaultlog.write(loggedmessage)
 
+    #writes endlines to default.log to make more readable
     def writeEndlineToDefaultLog(self):
         defaultlog = open("default_local.log", "a")
         defaultlog.write("\n")
         defaultlog.write("\n")
+
+    #this is for quitting, just sends q to all the servers.
+    def quitall(self):
+        host = socket.gethostname()
+
+        rootserverport = 5353
+        comserverport = 5356
+        govserverport = 5354
+        orgserverport = 5358
+
+        RecursiveRequestSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        RecursiveRequestSocket.connect((host, rootserverport))
+        RecursiveRequestSocket.send("q")
+
+        RecursiveRequestSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        RecursiveRequestSocket.connect((host, comserverport))
+        RecursiveRequestSocket.send("q")
+
+        RecursiveRequestSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        RecursiveRequestSocket.connect((host, govserverport))
+        RecursiveRequestSocket.send("q")
+
+        RecursiveRequestSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        RecursiveRequestSocket.connect((host, orgserverport))
+        RecursiveRequestSocket.send("q")
+
+        os.kill(os.getpid(), signal.SIGKILL)
 
     def run(self):
         open('mapping.log', 'w').close()
@@ -294,6 +338,9 @@ class ClientThread(Thread):
         while True :
             data = conn.recv(2048)
             print "Server received data:", data
+            if data == "q":
+                self.quitall()
+                break
             #write this first request to the default log
             requestone = data.replace("<", "")
             requesttwo = requestone.replace(">", "")

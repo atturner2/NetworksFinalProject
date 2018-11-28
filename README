@@ -1,0 +1,55 @@
+Alex Turner
+CSCI4211 Programing Project
+
+Getting Started
+After unzipping the file, you will have the following programs:  Note that all of the servers need to each be running on a seperate terminal before you run the client.
+
+Instructions:
+
+Start all five servers with the command “python servername.py”  NOT python3.  It will not run with python 3.
+Start the client with the command “client.py.”  You should now have six terminals open.
+The client will prompt you for an input.  Input the name of the input file, “user_input.”
+This is all you need to do.  The client will run the servers on all of the lines in the user_input file and write to the log files.  It WILL clear the log files out each time you run the servers but WILL NOT create them.  They need to be located in the same directory as the clients and servers.
+DO NOT modify the .dat files. If you do, make sure to keep the formatting as mentioned below in the Assumptions section.
+
+There are a few caveats to this program:
+The original requirements doc said we had to query a document to get the port numbers for the servers, but the TA said we could hardcode them.  I had problems with port 5355 on my machine for the org server, so I ran it on 5358.  This does technically violate the requirements doc but still fits all of the functional requirements.
+The “q” command to end the program work at any time but you will not be asked to use it until after you have ran at least one file.
+I debated heavily as to whether or not to remove all of the print statements I was using while building/debugging the servers, and I elected to leave them in, although it does make the code harder to read.  I felt they helped to effectively prove the code was my own, as well as show my understanding of the ins and outs of this program. That said, if I had to run this in a professional setting or presentation, I would have removed all of the print statements.
+The IP addresses are cached in the mapping file directly, meaning the server itself does not cache them or use them, but they are there.
+The message from the root server back to the local server does NOT contain an IP address because I am running these servers locally, they all have a hardcoded IP address of .0.0.0.0
+
+
+client.py
+
+This is the client program that is used to query the server. It works the following way:
+The client asks the user for an input.  This input is the name of a file.  Enter “user_input.”  This will run through every entry in that file.
+
+localserver.py
+
+The local server is the largest program in the assignment. It takes in the request from the client, validates it, parses it, and sends to the root.  Invalid requests are all handled here, and do not make it to the root server.  Depending on whether or not it is iterative or recursive, it either sends back the completed request to the client, or queries the org, com, or gov server directly.  ALL logging is also handled within this file.
+
+rootserver.py
+
+The root server handles all iterative and recursive requests from the local server.  For an iterative request, the port information is sent back to the local server, and the local server queries the com, org, or gov server directly.  For a recursive search, the root server queries the appropriate com, org, or gov server, parses the response, and then returns that response back to the local server.
+
+comserver.py
+
+The com, org, and gov server are all set up EXACTLY the same way and contain EXACTLY the same code, except they each query the com, org, or gov data file.  They take in a request from the local or root server, and return either the IP address and information they parse from the appropriate .dat file, or the error response when it is not found.
+
+
+orgserver.py
+
+See the description for Comserver.py
+
+govserver.py
+
+See the description for comserver.py
+
+Assumptions/Changes:
+The biggest change is as follows:
+Some of the inputs were put in without the “www” extension, and the .dat files provided reflected that change.  I did not feel this was a very robust implementation, because then “www.google.com” is now different from “google.com,” but the .dat files that I have been provided will work with the specific input file.  I decided to edit the .dat files so ALL urls in the .dat file have the “www” extension.  It seemed realistic in industry I would have access to my .dat files, but not necessarily all of the input files, so I should write my .dat files to work with any input.  The local server will add a “www” extension on to any request received without one. Henceforth, my program will work for both “google.com” and “www.google.com”, PROVIDING the .dat file contains “www.google.com”
+
+2) I assumed that all necessary invalid cases were included in the user_input file.  (capital letters, invalid domains, missing www.)  There are surely some inputs that still would cause problems somewhere along the way in the program, although, as explained above, my program is more robust than the requirements asked for, although could still be made more robust if need be.
+
+3)Note the .zip file submitted has a directory projfiles which contain the files used for reference along with the rubric.  They are irrelevant to my code but they are there.

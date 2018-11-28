@@ -1,4 +1,6 @@
 import socket
+import os
+import signal
 from threading import Thread
 from SocketServer import ThreadingMixIn
 # -*- coding: utf-8 -*-
@@ -15,6 +17,9 @@ class ClientThread(Thread):
         self.port = port
         print "[+] New server socket thread started for " + ip + ":" + str(port)
 
+    def die(self):
+        print"Dying!"
+        os.kill(os.getpid(), signal.SIGKILL)
     #this file takes in the domain and returns the proper message
     def openAndReadDatFile(self, data):
         file = open('datfiles/com.dat')
@@ -34,6 +39,8 @@ class ClientThread(Thread):
         #while True :
         data = conn.recv(2048)
         print "Server received request:", data
+        if data == "q":
+            self.die()
         file = open('datfiles/com.dat')
         message = self.openAndReadDatFile(data)
         print"response message sent: ", message
@@ -56,7 +63,7 @@ threads = []
 
 while True:
     tcpServer.listen(4)
-    print "Multithreaded Python server : Waiting for connections from TCP clients..."
+    print "Multithreaded Python com server : Waiting for connections from TCP clients..."
     (conn, (ip,port)) = tcpServer.accept()
     newthread = ClientThread(ip,port)
     newthread.start()
