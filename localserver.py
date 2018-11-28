@@ -108,7 +108,6 @@ class ClientThread(Thread):
             return 1
         else:
             return 0
-
     def recursiveRequest(self, data):
         print "Here is our recursive request to send to the root: ", data
         host = socket.gethostname()
@@ -121,6 +120,8 @@ class ClientThread(Thread):
         RecursiveRequestSocket.send(MESSAGE)
         data = RecursiveRequestSocket.recv(BUFFER_SIZE)
         print "Local Server Recieved received data:", data
+        self.rootMessageLog(data)
+
         return data
     #this function parses for just the domain name to be queried from it's appropriate
     #domain server.  It takes in the whole query and returns just the domain.
@@ -176,6 +177,7 @@ class ClientThread(Thread):
         RecursiveRequestSocket.send(MESSAGE)
         data = RecursiveRequestSocket.recv(BUFFER_SIZE)
         print "Local Server Recieved received data from root for iterative request:", data
+        self.rootMessageLog(data)
         message = self.iterativeRequestPartTwo(data, domain)
         return message
 
@@ -203,6 +205,13 @@ class ClientThread(Thread):
         mapfile.write(finalmessage)
         mapfile.write("\n")
 
+    def writeFirstRequestToDefaultLog(self, request):
+        defaultlog = open("default_local.log", "a")
+        defaultlog.write(request)
+        splitrequest = request.split(",")
+        requesttwo = "default_local, " + splitrequest[1] + ", " + splitrequest[2]
+        defaultlog.write(requesttwo)
+
     def mappingAndIDlog(self, request, message):
         messageone = message.replace("<", "")
         messagetwo = messageone.replace(">", "")
@@ -220,10 +229,21 @@ class ClientThread(Thread):
             self.writeToPC1File(requesttwo, messagetwo)
         if cleanedrequest[0] == "PC2":
             self.writeToPC2File(requesttwo, messagetwo)
+        self.writeFirstRequestToDefaultLog(requesttwo)
+
+    def rootMessageLog(self, message):
+        messageone = message.replace("<", "")
+        messagetwo = messageone.replace(">", "")
+        cleanedmessage = messagetwo.split(",")
+        loggedmessage = cleanedmessage[0] + ", " + "ROOT, " + cleanedmessage[2]
+        defaultlog = open("default_local.log", "a")
+        defaultlog.write(loggedmessage)
+
     def run(self):
         open('mapping.log', 'w').close()
         open('PC1.log', 'w').close()
         open('PC2.log', 'w').close()
+        open('default_local.log', 'w').close()
 
 
 

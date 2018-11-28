@@ -38,9 +38,9 @@ class ClientThread(Thread):
             return 1
 
     def getDomainFromURL(self, data):
-        print "original data: ", data
+        #print "original data: ", data
         temp = data.split(".")
-        print "temp3: ", temp[2]
+        #print "temp3: ", temp[2]
         domain = temp[2]
         return domain
 
@@ -57,13 +57,13 @@ class ClientThread(Thread):
         requestone = data.replace("<", "")
         requesttwo = requestone.replace(">", "")
         cleanedrequest = requesttwo.split(",")
-        print "Domain name to search for: ", cleanedrequest[1]
+        #print "Domain name to search for: ", cleanedrequest[1]
         domain = cleanedrequest[1].split(".")
         finaldomain = domain[2]
-        print "domain server to query: ", finaldomain
+        #print "domain server to query: ", finaldomain
         port = self.getPortNumber(finaldomain)
-        print "final domain: ", finaldomain
-        print "final port number: ", port
+        #print "final domain: ", finaldomain
+        #print "final port number: ", port
         message = "<0x01, " + cleanedrequest[0] + ", "+ str(port) + ">"
         return message
 
@@ -80,11 +80,11 @@ class ClientThread(Thread):
     def recursiveRequest(self, data):
         print "Recieved a recursive request for :", data
         url = self.saveDomainForRecursiveRequest(data)
-        print "url: ", url
+        #print "url: ", url
         domain = self.getDomainFromURL(url)
-        print "domain: ", domain
+        #print "domain: ", domain
         port = self.getPortNumber(domain)
-        print "port number: ", port
+        #print "port number: ", port
 
         message = url
         host = socket.gethostname()
@@ -96,8 +96,9 @@ class ClientThread(Thread):
         RecursiveRequestSocket.connect((host, port))
         RecursiveRequestSocket.send(message)
         data = RecursiveRequestSocket.recv(BUFFER_SIZE)
-        print "Here is data back from com server to the root server: ", data
+        print "Here is data back from com, or or goc server to the root server: ", data
         return data
+
 
 
     #this is the main running function of the server, will call its helpers
@@ -113,9 +114,11 @@ class ClientThread(Thread):
             if IR == 1:
                 #call the iterative function(easier)
                 message = self.iterativeRequest(data)
+                print "Root Server sending message from Iterative Request: ", message
             if IR == 0:
                 #call the Recursive function
                 message = self.recursiveRequest(data)
+                print "Root Server sending message from Recursive Request: ", message
 
 
 
