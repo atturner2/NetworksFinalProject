@@ -23,11 +23,7 @@ class ClientThread(Thread):
         for line in file:
              temp = line.split()
              domain = temp[0]
-             print "domain: " , domain
-             print "Temp[0]: ", temp[0]
-             print "data: ", data
              lowereddata = data.lower()
-             print "lowered data", lowereddata
              if lowereddata.strip() == domain.strip():
                  print"here in the if"
                  message = "<0x00, gov, " + temp[1] + ">"
@@ -37,9 +33,10 @@ class ClientThread(Thread):
     def run(self):
         #while True :
         data = conn.recv(2048)
-        print "Server received data:", data
+        print "Server received request:", data
         file = open('datfiles/gov.dat')
         message = self.openAndReadDatFile(data)
+        print"response message sent: ", message
         print message
         conn.send(message)  # echo
     #this function takes in the request from the
@@ -49,7 +46,7 @@ class ClientThread(Thread):
 
 # Multithreaded Python server : TCP Server Socket Program Stub
 TCP_IP = '0.0.0.0'
-TCP_PORT = 5355
+TCP_PORT = 5358
 BUFFER_SIZE = 20  # Usually 1024, but we need quick response
 
 tcpServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

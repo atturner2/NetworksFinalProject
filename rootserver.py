@@ -31,7 +31,7 @@ class ClientThread(Thread):
         if data.strip() == "org":
             return 5354
         if data.strip() == "gov":
-            return 5355
+            return 5358
         if data.strip() == "com":
             return 5356
         else:
@@ -85,7 +85,7 @@ class ClientThread(Thread):
         print "domain: ", domain
         port = self.getPortNumber(domain)
         print "port number: ", port
-        
+
         message = url
         host = socket.gethostname()
         BUFFER_SIZE = 2000
@@ -116,6 +116,7 @@ class ClientThread(Thread):
             if IR == 0:
                 #call the Recursive function
                 message = self.recursiveRequest(data)
+            
 
 
             #MESSAGE = raw_input("Multithreaded Python server : Enter Response from Server/Enter exit:")

@@ -56,7 +56,7 @@ class ClientThread(Thread):
                 print "length is short but format is invalid. Mark Invalid."
                 isValid = 0
         elif length == 3:
-            if not ((hostname_to_split[2] == "org") or (hostname_to_split[2] == "com") or (hostname_to_split[2] == "gov")):
+            if not ((hostname_to_split[2].strip() == "org") or (hostname_to_split[2].strip() == "com") or (hostname_to_split[2].strip() == "gov")):
                 print hostname_to_split[2]
                 print "extension invalid, even though length is correct."
                 isValid = 0
@@ -86,8 +86,9 @@ class ClientThread(Thread):
         if len(hostname) == 1:
             isValid = 0
         #if len(hostname) == 2:
-        if IR != 'I' and IR != 'R':
+        if (IR.strip() != 'I') and (IR.strip() != 'R'):
             isValid = 0
+            print "WE know its invalid!!"
         #now we check the Iterative or Revursive for validity
         #Now we check the hostname for validity
 
@@ -188,25 +189,27 @@ class ClientThread(Thread):
             #I didn't mind copy and pasting the same code, but with
             #this function as complicated as it is, I didn't want
             #it to look crazy with all the message parsing
-            isValid = self.validateClientID(data)
+            isValid1 = self.validateClientID(data)
 
-            isValid = self.validateURL(data)
-            if isValid == 0:
+            isValid2 = self.validateURL(data)
+
+            if isValid1 == 0 or isValid2 == 0:
                 conn.send("Invalid Request Format")
-            elif isValid == 2:
+            elif isValid2 == 2:
                 #call the message modifier for the specific www case
                 data = self.specialMissingWWWCase(data)
 
                 #check iterative or recursive
             IR = self.checkIterativeOrRecursive(data)
-            if IR == 1 and isValid != 0:
+            if IR == 1 and isValid1 != 0 and isValid2 != 0:
                 #request is Iterative, call iterative function
                 message = self.iterativeRequestPartOne(data)
                 conn.send(message)
-            if IR == 0 and isValid != 0:
+            elif IR == 0 and isValid1 != 0 and isValid2 != 0:
                 #request is Recursive, call recursive function
                 message = self.recursiveRequest(data)
                 conn.send(message)  # echo
+
     #this function takes in the request from the
     #client and makes sure it is valid. Returns 1 for valid and returns 0 for
     #invalid.
