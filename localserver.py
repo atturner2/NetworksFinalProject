@@ -179,7 +179,30 @@ class ClientThread(Thread):
         message = self.iterativeRequestPartTwo(data, domain)
         return message
 
+    def writeToMappingFile(self, url, ip):
+        print"Here is the request to put in the map file:", url, ", ", ip
+        request = url + ", " + ip + " \n"
+        mapfile = open("mapping.log", "a")
+        mapfile.write(request)
+
+    def mappinglog(self, request, message):
+        messageone = message.replace("<", "")
+        messagetwo = messageone.replace(">", "")
+        messageclean = messagetwo.split(",")
+
+        urlone = request.replace("<", "")
+        urltwo = urlone.replace(">", "")
+        cleanedurl = urltwo.split(",")
+
+        if messageclean[0] == "0x00":
+            ip = messageclean[2].strip()
+            url = cleanedurl[1].strip()
+            self.writeToMappingFile(url, ip)
+
+
     def run(self):
+        open('mapping.log', 'w').close()
+
         while True :
             data = conn.recv(2048)
             print "Server received data:", data
@@ -204,10 +227,16 @@ class ClientThread(Thread):
             if IR == 1 and isValid1 != 0 and isValid2 != 0:
                 #request is Iterative, call iterative function
                 message = self.iterativeRequestPartOne(data)
+                print "Here is the original data: ", data
+                print "Here is the message back to the client: ", message
+                self.mappinglog(data, message)
                 conn.send(message)
             elif IR == 0 and isValid1 != 0 and isValid2 != 0:
                 #request is Recursive, call recursive function
                 message = self.recursiveRequest(data)
+                print "Here is the original data: ", data
+                print "Here is the message back to the client: ", message
+                self.mappinglog(data,message)
                 conn.send(message)  # echo
 
     #this function takes in the request from the
