@@ -28,11 +28,11 @@ class ClientThread(Thread):
     # this function will take in com, dat, or org and return
     #the appropriate port number, for that given Iterative request.
     def getPortNumber(self, data):
-        if data.strip() == "org":
+        if data.strip().lower() == "org":
             return 5354
-        if data.strip() == "gov":
+        if data.strip().lower() == "gov":
             return 5358
-        if data.strip() == "com":
+        if data.strip().lower() == "com":
             return 5356
         else:
             return 1
@@ -116,7 +116,7 @@ class ClientThread(Thread):
             if IR == 0:
                 #call the Recursive function
                 message = self.recursiveRequest(data)
-            
+
 
 
             #MESSAGE = raw_input("Multithreaded Python server : Enter Response from Server/Enter exit:")

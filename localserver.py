@@ -147,7 +147,7 @@ class ClientThread(Thread):
         port = self.grabPortNumberForIterativeRequest(data)
         print "here is the port to get the domain from: ", int(port.strip())
         message = domain
-        if int(port.strip()) = 1:
+        if int(port.strip()) == 1:
             print "Port is 1, invalid format"
         host = socket.gethostname()
         BUFFER_SIZE = 2000
