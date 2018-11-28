@@ -121,7 +121,7 @@ class ClientThread(Thread):
         data = RecursiveRequestSocket.recv(BUFFER_SIZE)
         print "Local Server Recieved received data:", data
         self.rootMessageLog(data)
-
+        self.rootDefaultLog(data)
         return data
     #this function parses for just the domain name to be queried from it's appropriate
     #domain server.  It takes in the whole query and returns just the domain.
@@ -159,6 +159,7 @@ class ClientThread(Thread):
         RecursiveRequestSocket.send(message)
         data = RecursiveRequestSocket.recv(BUFFER_SIZE)
         print "Here is Iterative request back from the server: ", data
+        self.iterativePartTwoLog(data)
         return data
     # this function queries the root server for the port number of the
     #appropriate domain server.  It then calls the part two function
@@ -229,16 +230,33 @@ class ClientThread(Thread):
             self.writeToPC1File(requesttwo, messagetwo)
         if cleanedrequest[0] == "PC2":
             self.writeToPC2File(requesttwo, messagetwo)
-        self.writeFirstRequestToDefaultLog(requesttwo)
+        #self.writeFirstRequestToDefaultLog(requesttwo)
+    def iterativePartTwoLog(self, message):
+        messageone = message.replace("<", "")
+        messagetwo = messageone.replace(">", "")
+        defaultlog = open("default_local.log", "a")
+        defaultlog.write(messagetwo)
 
     def rootMessageLog(self, message):
         messageone = message.replace("<", "")
         messagetwo = messageone.replace(">", "")
         cleanedmessage = messagetwo.split(",")
-        loggedmessage = cleanedmessage[0] + ", " + "ROOT, " + cleanedmessage[2]
+        loggedmessage = cleanedmessage[0] + ", " + "ROOT, " + cleanedmessage[2] + "\n"
         defaultlog = open("default_local.log", "a")
         defaultlog.write(loggedmessage)
 
+    def rootDefaultLog(self, message):
+        messageone = message.replace("<", "")
+        messagetwo = messageone.replace(">", "")
+        cleanedmessage = messagetwo.split(",")
+        loggedmessage = cleanedmessage[0] + ", " + "default_local, " + cleanedmessage[2] + "\n"
+        defaultlog = open("default_local.log", "a")
+        defaultlog.write(loggedmessage)
+
+    def writeEndlineToDefaultLog(self):
+        defaultlog = open("default_local.log", "a")
+        defaultlog.write("\n")
+        defaultlog.write("\n")
     def run(self):
         open('mapping.log', 'w').close()
         open('PC1.log', 'w').close()
@@ -250,6 +268,10 @@ class ClientThread(Thread):
         while True :
             data = conn.recv(2048)
             print "Server received data:", data
+            #write this first request to the default log
+            requestone = data.replace("<", "")
+            requesttwo = requestone.replace(">", "")
+            self.writeFirstRequestToDefaultLog(requesttwo)
             #now we will first validate the request from the client
             #we will use our defined validate message function
             #note each function is called with the original request.
@@ -262,6 +284,7 @@ class ClientThread(Thread):
 
             if isValid1 == 0 or isValid2 == 0:
                 conn.send("Invalid Request Format")
+                self.writeEndlineToDefaultLog()
             elif isValid2 == 2:
                 #call the message modifier for the specific www case
                 data = self.specialMissingWWWCase(data)
@@ -274,6 +297,8 @@ class ClientThread(Thread):
                 print "Here is the original data: ", data
                 print "Here is the message back to the client: ", message
                 self.mappingAndIDlog(data, message)
+
+                self.writeEndlineToDefaultLog()
                 conn.send(message)
             elif IR == 0 and isValid1 != 0 and isValid2 != 0:
                 #request is Recursive, call recursive function
@@ -281,6 +306,8 @@ class ClientThread(Thread):
                 print "Here is the original data: ", data
                 print "Here is the message back to the client: ", message
                 self.mappingAndIDlog(data,message)
+
+                self.writeEndlineToDefaultLog()
                 conn.send(message)  # echo
 
     #this function takes in the request from the
