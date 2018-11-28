@@ -31,6 +31,7 @@ class ClientThread(Thread):
         print "Stripped ClientID: ", clientID
         if clientID != 'PC1' and clientID != 'PC2':
             isValid = 0
+
         #now we check the hostname for validity
         #now we check the Iterative or Revursive for validity
         #Now we check the hostname for validity
@@ -48,10 +49,8 @@ class ClientThread(Thread):
         # returns 1 for Iterative
         # returns 0 for Recursive
         if IR.strip() == 'i' or IR.strip() == 'I':
-            print"We think it is iterative, here is the actual data: ", IR
             return 1
         else:
-            print "We tink is is recursive, here is the actual data: ", IR
             return 0
 
     def recursiveRequest(self, data):
@@ -66,12 +65,50 @@ class ClientThread(Thread):
         RecursiveRequestSocket.send(MESSAGE)
         data = RecursiveRequestSocket.recv(BUFFER_SIZE)
         print "Local Server Recieved received data:", data
+        return data
+    #this function parses for just the domain name to be queried from it's appropriate
+    #domain server.
+    def saveDomainForIterativeRequest(self, data):
+        requestone = data.replace("<", "")
+        requesttwo = requestone.replace(">", "")
+        cleanedrequest = requesttwo.split(",")
+        return cleanedrequest[1]
 
+    #this parses the message from the root server and returns the port number
+    # which is how we identify the com, org, and gov servers.
+    def grabPortNumberForIterativeRequest(self, data):
+        requestone = data.replace("<", "")
+        requesttwo = requestone.replace(">", "")
+        cleanedrequest = requesttwo.split(",")
+        return cleanedrequest[2]
+
+    #This function takes the port number returned from the Root server and queries
+    #the appropriate com, org, or gov server. It takes in the domain from the first
+    #function and uses that to query the appropriate server for the needed information.
+    def iterativeRequestPartTwo(self, data, domain):
+        print"querying bottom DNS server for iterative request with :", data
+        print "domain to query with: ", domain
+        port = self.grabPortNumberForIterativeRequest(data)
+        print "here is the port to get the domain from: ", int(port.strip())
+        message = domain
+
+        host = socket.gethostname()
+        BUFFER_SIZE = 2000
+
+
+        RecursiveRequestSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        RecursiveRequestSocket.connect((host, int(port.strip())))
+        RecursiveRequestSocket.send(message)
+        data = RecursiveRequestSocket.recv(BUFFER_SIZE)
+        print "Here is Iterative request back from the server: ", data
+        return data
     # this function queries the root server for the port number of the
     #appropriate domain server.  It then calls the part two function
-    # which will then in turn query the domain server directly. 
+    # which will then in turn query the domain server directly.
     def iterativeRequestPartOne(self, data):
         print "Here is our Iterative request to send to the root: ", data
+        domain = self.saveDomainForIterativeRequest(data)
+
         host = socket.gethostname()
         port = 5353
         BUFFER_SIZE = 2000
@@ -81,8 +118,14 @@ class ClientThread(Thread):
         RecursiveRequestSocket.connect((host, port))
         RecursiveRequestSocket.send(MESSAGE)
         data = RecursiveRequestSocket.recv(BUFFER_SIZE)
-        print "Local Server Recieved received data:", data
+        print "Local Server Recieved received data from root for iterative request:", data
+        message = self.iterativeRequestPartTwo(data, domain)
+        return message
 
+    def changeURLToLowercase(self, data):
+        requestone = data.replace("<", "")
+        requesttwo = requestone.replace(">", "")
+        cleanedrequest = requesttwo.split(",")
 
     def run(self):
         while True :
@@ -102,19 +145,11 @@ class ClientThread(Thread):
                 IR = self.checkIterativeOrRecursive(data)
             if IR == 1:
                 #request is Iterative, call iterative function
-                self.iterativeRequestPartOne(data)
+                message = self.iterativeRequestPartOne(data)
             if IR == 0:
                 #request is Recursive, call recursive function
-                self.recursiveRequest(data)
-
-
-
-
-
-            MESSAGE = raw_input("Multithreaded Python server : Enter Response from Server/Enter q:")
-            if MESSAGE == 'q':
-                break
-            conn.send(MESSAGE)  # echo
+                message = self.recursiveRequest(data)
+            conn.send(message)  # echo
     #this function takes in the request from the
     #client and makes sure it is valid. Returns 1 for valid and returns 0 for
     #invalid.

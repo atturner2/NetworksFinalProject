@@ -36,6 +36,17 @@ class ClientThread(Thread):
             return 5356
         else:
             return 1
+
+    def getDomainFromURL(self, data):
+        print "original data: ", data
+        temp = data.split(".")
+        print "temp3: ", temp[2]
+        domain = temp[2]
+        return domain
+
+
+
+
     #this function will take in the request from the local server and return
     #the full return message needed to the "run" method, so that the run method
     # doesn't have to do any calculation.
@@ -56,10 +67,39 @@ class ClientThread(Thread):
         message = "<0x01, " + cleanedrequest[0] + ", "+ str(port) + ">"
         return message
 
+    #this is the same as saveDomainForIterativeRequest in the local server,
+    #it does the exact same thing, the only difference is for the name.
+    def saveDomainForRecursiveRequest(self, data):
+        requestone = data.replace("<", "")
+        requesttwo = requestone.replace(">", "")
+        cleanedrequest = requesttwo.split(",")
+        return cleanedrequest[1]
+
     #this function will take in a request and return what it gets back from the
     #com, org, or dat server.
     def recursiveRequest(self, data):
         print "Recieved a recursive request for :", data
+        url = self.saveDomainForRecursiveRequest(data)
+        print "url: ", url
+        domain = self.getDomainFromURL(url)
+        print "domain: ", domain
+        port = self.getPortNumber(domain)
+        print "port number: ", port
+        
+        message = url
+        host = socket.gethostname()
+        BUFFER_SIZE = 2000
+        print "Root server trying to connect on port: ", port
+
+
+        RecursiveRequestSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        RecursiveRequestSocket.connect((host, port))
+        RecursiveRequestSocket.send(message)
+        data = RecursiveRequestSocket.recv(BUFFER_SIZE)
+        print "Here is data back from com server to the root server: ", data
+        return data
+
+
     #this is the main running function of the server, will call its helpers
     # to send back the proper response to the local server and the client.
     def run(self):
@@ -75,7 +115,7 @@ class ClientThread(Thread):
                 message = self.iterativeRequest(data)
             if IR == 0:
                 #call the Recursive function
-                self.recursiveRequest(data)
+                message = self.recursiveRequest(data)
 
 
             #MESSAGE = raw_input("Multithreaded Python server : Enter Response from Server/Enter exit:")
