@@ -139,6 +139,14 @@ class ClientThread(Thread):
         cleanedrequest = requesttwo.split(",")
         return cleanedrequest[2]
 
+    #this function takes in the request from the client and stores the IR value
+    #in order to log the default_log file properly.
+    def grabIRForIterativeLogging(self, data):
+        requestone = data.replace("<", "")
+        requesttwo = requestone.replace(">", "")
+        cleanedrequest = requesttwo.split(",")
+        return cleanedrequest[2]
+
     #This function takes the port number returned from the Root server and queries
     #the appropriate com, org, or gov server. It takes in the domain from the first
     #function and uses that to query the appropriate server for the needed information.
@@ -161,13 +169,15 @@ class ClientThread(Thread):
         print "Here is Iterative request back from the server: ", data
         self.iterativePartTwoLog(data)
         return data
+
     # this function queries the root server for the port number of the
     #appropriate domain server.  It then calls the part two function
     # which will then in turn query the domain server directly.
     def iterativeRequestPartOne(self, data):
         print "Here is our Iterative request to send to the root: ", data
         domain = self.saveDomainForIterativeRequest(data)
-
+        IR = self.grabIRForIterativeLogging(data).strip()
+        print "IR VALUE: ", IR
         host = socket.gethostname()
         port = 5353
         BUFFER_SIZE = 2000
@@ -176,11 +186,26 @@ class ClientThread(Thread):
         RecursiveRequestSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         RecursiveRequestSocket.connect((host, port))
         RecursiveRequestSocket.send(MESSAGE)
-        data = RecursiveRequestSocket.recv(BUFFER_SIZE)
-        print "Local Server Recieved received data from root for iterative request:", data
-        self.rootMessageLog(data)
-        message = self.iterativeRequestPartTwo(data, domain)
+        response = RecursiveRequestSocket.recv(BUFFER_SIZE)
+        print "Local Server Recieved received response from root for iterative request:", response
+        self.rootMessageLog(response)
+        self.iterativeDefaultLogOne(domain, IR)
+        message = self.iterativeRequestPartTwo(response, domain)
         return message
+
+    def iterativeDefaultLogOne(self, domain, IR):
+        defaultlog = open("default_local.log", "a")
+        message = "default_local" + domain + ", " + IR + "\n"
+        defaultlog.write(message)
+
+
+    def iterativeDefaultLogTwo(self, message):
+        defaultlog = open("default_local.log", "a")
+        messageone = message.replace("<", "")
+        messagetwo = messageone.replace(">", "")
+        splitmessage = messagetwo.split(",")
+        finalmessage = "\n" + splitmessage[0] + ", " + "default_local" + ", " + splitmessage[2]
+        defaultlog.write(finalmessage)
 
     def writeToMappingFile(self, url, ip):
         print"Here is the request to put in the map file:", url, ", ", ip
@@ -257,6 +282,7 @@ class ClientThread(Thread):
         defaultlog = open("default_local.log", "a")
         defaultlog.write("\n")
         defaultlog.write("\n")
+
     def run(self):
         open('mapping.log', 'w').close()
         open('PC1.log', 'w').close()
@@ -297,7 +323,7 @@ class ClientThread(Thread):
                 print "Here is the original data: ", data
                 print "Here is the message back to the client: ", message
                 self.mappingAndIDlog(data, message)
-
+                self.iterativeDefaultLogTwo(message)
                 self.writeEndlineToDefaultLog()
                 conn.send(message)
             elif IR == 0 and isValid1 != 0 and isValid2 != 0:
