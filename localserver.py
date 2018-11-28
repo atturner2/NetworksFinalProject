@@ -185,23 +185,47 @@ class ClientThread(Thread):
         mapfile = open("mapping.log", "a")
         mapfile.write(request)
 
-    def mappinglog(self, request, message):
+    def writeToPC1File(self, request, message):
+        print"Here is the request to put in the map file:", request, ", ", message
+        finalrequest = request
+        finalmessage = message + "\n"
+        mapfile = open("PC1.log", "a")
+        mapfile.write(finalrequest)
+        mapfile.write(finalmessage)
+        mapfile.write("\n")
+
+    def writeToPC2File(self, request, message):
+        print"Here is the request to put in the map file:", request, ", ", message
+        finalrequest = request
+        finalmessage = message + "\n"
+        mapfile = open("PC2.log", "a")
+        mapfile.write(finalrequest)
+        mapfile.write(finalmessage)
+        mapfile.write("\n")
+
+    def mappingAndIDlog(self, request, message):
         messageone = message.replace("<", "")
         messagetwo = messageone.replace(">", "")
         messageclean = messagetwo.split(",")
 
-        urlone = request.replace("<", "")
-        urltwo = urlone.replace(">", "")
-        cleanedurl = urltwo.split(",")
+        requestone = request.replace("<", "")
+        requesttwo = requestone.replace(">", "")
+        cleanedrequest = requesttwo.split(",")
 
         if messageclean[0] == "0x00":
             ip = messageclean[2].strip()
-            url = cleanedurl[1].strip()
+            url = cleanedrequest[1].strip()
             self.writeToMappingFile(url, ip)
-
-
+        if cleanedrequest[0] == "PC1":
+            self.writeToPC1File(requesttwo, messagetwo)
+        if cleanedrequest[0] == "PC2":
+            self.writeToPC2File(requesttwo, messagetwo)
     def run(self):
         open('mapping.log', 'w').close()
+        open('PC1.log', 'w').close()
+        open('PC2.log', 'w').close()
+
+
 
         while True :
             data = conn.recv(2048)
@@ -229,14 +253,14 @@ class ClientThread(Thread):
                 message = self.iterativeRequestPartOne(data)
                 print "Here is the original data: ", data
                 print "Here is the message back to the client: ", message
-                self.mappinglog(data, message)
+                self.mappingAndIDlog(data, message)
                 conn.send(message)
             elif IR == 0 and isValid1 != 0 and isValid2 != 0:
                 #request is Recursive, call recursive function
                 message = self.recursiveRequest(data)
                 print "Here is the original data: ", data
                 print "Here is the message back to the client: ", message
-                self.mappinglog(data,message)
+                self.mappingAndIDlog(data,message)
                 conn.send(message)  # echo
 
     #this function takes in the request from the
