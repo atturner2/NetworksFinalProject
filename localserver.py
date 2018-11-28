@@ -56,7 +56,7 @@ class ClientThread(Thread):
                 print "length is short but format is invalid. Mark Invalid."
                 isValid = 0
         elif length == 3:
-            if not ((hostname_to_split[2].strip() == "org") or (hostname_to_split[2].strip() == "com") or (hostname_to_split[2].strip() == "gov")):
+            if not ((hostname_to_split[2].strip().lower() == "org") or (hostname_to_split[2].strip().lower() == "com") or (hostname_to_split[2].strip().lower() == "gov")):
                 print hostname_to_split[2]
                 print "extension invalid, even though length is correct."
                 isValid = 0
@@ -147,7 +147,7 @@ class ClientThread(Thread):
         port = self.grabPortNumberForIterativeRequest(data)
         print "here is the port to get the domain from: ", int(port.strip())
         message = domain
-        if port == 1:
+        if int(port.strip()) = 1:
             print "Port is 1, invalid format"
         host = socket.gethostname()
         BUFFER_SIZE = 2000
