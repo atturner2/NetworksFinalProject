@@ -13,9 +13,59 @@ class ClientThread(Thread):
         self.port = port
         print "[+] New server socket thread started for " + ip + ":" + str(port)
 
-        #this function takes in the original client message and checks
-        #to make sure it is of valid format.
-    def validateClientMessage(self, data):
+    #this function handles the special missing case when "www." is not included
+    #in the url. it makes a new request to send in.
+    def specialMissingWWWCase(self, data):
+        requestone = data.replace("<", "")
+        requesttwo = requestone.replace(">", "")
+        cleanedrequest = requesttwo.split(",")
+        ID = cleanedrequest[0]
+        hostname = cleanedrequest[1]
+        IR = cleanedrequest[2]
+        print "OldId: ", ID
+        print "hostname: ", hostname
+        print "IR: ", IR
+        newhostname = "www." + hostname.strip()
+        print "new host name: ", newhostname
+        newmessage = "<" + ID + ", " + newhostname + "," + IR + ">"
+        print newmessage
+        return newmessage
+
+
+    #this function validates the url field in the original query.
+    def validateURL(self, data):
+        print "validating URL"
+        #1 for valid, #0 for invalid, 2 for missing www case
+        isValid = 1
+        requestone = data.replace("<", "")
+        requesttwo = requestone.replace(">", "")
+        cleanedrequest = requesttwo.split(",")
+        hostname = cleanedrequest[1]
+        print "hostname: ", hostname
+        hostname_to_split = hostname.split(".")
+        length = len(hostname_to_split)
+        print"Length: ", length
+        if length == 1:
+            isValid = 0
+        #now we check or the missing www case
+        elif length == 2:
+            if (hostname_to_split[1] == "org") or (hostname_to_split[1] == "com") or (hostname_to_split[1] == "gov"):
+                print "missing www case true, message needs to be reformatted. Special Case Only."
+                isValid = 2
+            else:
+                print "length is short but format is invalid. Mark Invalid."
+                isValid = 0
+        elif length == 3:
+            if not ((hostname_to_split[2] == "org") or (hostname_to_split[2] == "com") or (hostname_to_split[2] == "gov")):
+                print hostname_to_split[2]
+                print "extension invalid, even though length is correct."
+                isValid = 0
+        else:
+            isValid = 0
+        return isValid
+    #this function takes in the original client message and checks
+    #to make sure the client id field is of valid format.
+    def validateClientID(self, data):
         isValid = 1
         print "recieved message to validate: ", data
         requestone = data.replace("<", "")
@@ -26,13 +76,18 @@ class ClientThread(Thread):
         IR = cleanedrequest[2]
         print "hostname: ", hostname
         print "IR: ", IR
+        print "Length of hostname: ", len(hostname.split("."))
         #now we check for invalidity. we will first check the ClientID
         clientID.strip()
         print "Stripped ClientID: ", clientID
         if clientID != 'PC1' and clientID != 'PC2':
             isValid = 0
-
         #now we check the hostname for validity
+        if len(hostname) == 1:
+            isValid = 0
+        #if len(hostname) == 2:
+        if IR != 'I' and IR != 'R':
+            isValid = 0
         #now we check the Iterative or Revursive for validity
         #Now we check the hostname for validity
 
@@ -67,7 +122,7 @@ class ClientThread(Thread):
         print "Local Server Recieved received data:", data
         return data
     #this function parses for just the domain name to be queried from it's appropriate
-    #domain server.
+    #domain server.  It takes in the whole query and returns just the domain.
     def saveDomainForIterativeRequest(self, data):
         requestone = data.replace("<", "")
         requesttwo = requestone.replace(">", "")
@@ -91,7 +146,8 @@ class ClientThread(Thread):
         port = self.grabPortNumberForIterativeRequest(data)
         print "here is the port to get the domain from: ", int(port.strip())
         message = domain
-
+        if port == 1:
+            print "Port is 1, invalid format"
         host = socket.gethostname()
         BUFFER_SIZE = 2000
 
@@ -122,11 +178,6 @@ class ClientThread(Thread):
         message = self.iterativeRequestPartTwo(data, domain)
         return message
 
-    def changeURLToLowercase(self, data):
-        requestone = data.replace("<", "")
-        requesttwo = requestone.replace(">", "")
-        cleanedrequest = requesttwo.split(",")
-
     def run(self):
         while True :
             data = conn.recv(2048)
@@ -137,19 +188,25 @@ class ClientThread(Thread):
             #I didn't mind copy and pasting the same code, but with
             #this function as complicated as it is, I didn't want
             #it to look crazy with all the message parsing
-            isValid = self.validateClientMessage(data)
+            isValid = self.validateClientID(data)
+
+            isValid = self.validateURL(data)
             if isValid == 0:
                 conn.send("Invalid Request Format")
-            else:
+            elif isValid == 2:
+                #call the message modifier for the specific www case
+                data = self.specialMissingWWWCase(data)
+
                 #check iterative or recursive
-                IR = self.checkIterativeOrRecursive(data)
-            if IR == 1:
+            IR = self.checkIterativeOrRecursive(data)
+            if IR == 1 and isValid != 0:
                 #request is Iterative, call iterative function
                 message = self.iterativeRequestPartOne(data)
-            if IR == 0:
+                conn.send(message)
+            if IR == 0 and isValid != 0:
                 #request is Recursive, call recursive function
                 message = self.recursiveRequest(data)
-            conn.send(message)  # echo
+                conn.send(message)  # echo
     #this function takes in the request from the
     #client and makes sure it is valid. Returns 1 for valid and returns 0 for
     #invalid.

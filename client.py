@@ -14,6 +14,7 @@ while MESSAGE != 'q':
     tcpClientA.send(MESSAGE)
     data = tcpClientA.recv(BUFFER_SIZE)
     print " Client2 received data:", data
+
     MESSAGE = raw_input("tcpClientA: Enter message to continue/ Enter q to quit:")
 
 tcpClientA.close()
